@@ -48,8 +48,8 @@ class Consulta(tkinter.Frame):
 		
         # Define the different GUI widgets
        
-        
-        self.submit_button = tkinter.Button(self.parent, text = "Insert", command = self.insertarDatos)
+        #boton que llama dos funciones al mismo tiempo 
+        self.submit_button = tkinter.Button(self.parent, text = "Insert", command = lambda: self.descontarArticulos() or self.insertarDatosConsultados()) #self.insertarDatosConsultados)
         self.submit_button.grid(row = 2, column = 1, sticky = tkinter.W)
         #self.exit_button = tkinter.Button(self.parent, text = "Exit", command = self.parent.quit)
         #self.exit_button.grid(row = 0, column = 3)
@@ -74,27 +74,32 @@ class Consulta(tkinter.Frame):
         # Initialize the counter
         self.i = 1
 
-     
+
+
+    #funcion que calcula la devuelta que se debe entregar al cliente    
     def calcularDevuelta(*args):
-    	res = devuelta
-    	cli = totalSuma
-    	igual = devuelta.get()-totalSuma
+    	#res = dineroEntregadoCliente
+    	#cli = totalSuma
+    	igual = dineroEntregadoCliente.get()-totalSuma
     	mostrarCambio.insert(INSERT,igual)
     	mostrarCambio.configure(state=DISABLED)	    
-    
+    	#self.descontarArticulos()
 
-    def insertarDatos(self):
+
+
+    #fincion que muestra los datos de los articulos que se van a vender	
+    def insertarDatosConsultados(self):
         global totalSuma
         global mostrarCambio
-        global devuelta
-        devuelta = IntVar()
+        global dineroEntregadoCliente
+        dineroEntregadoCliente = IntVar()
         lblConsultar = objCursor.execute("SELECT * FROM productos")
         rows = objCursor.fetchall()
         devueltaCliente = 0
         mostrarTotal = Text(pestaña1,width=10, height=1.5)
         mostrarCambio = Text(pestaña1,width=10, height=1.5)
         mostrarTotal.configure(state=NORMAL)
-        dineroCliente = Entry(pestaña1,textvariable=devuelta,width=10).place(x=10,y=290)
+        dineroCliente = Entry(pestaña1,textvariable=dineroEntregadoCliente,width=10).place(x=10,y=290)
        	for row in rows:
        		if entradaCodigo.get() == row[0] and len(entradaCodigo.get())!=0: #analiza si entradaCodigo esta vacia
        			multiplicarCantidad = row[4]*entradaCantidad.get()
@@ -103,11 +108,12 @@ class Consulta(tkinter.Frame):
        			mostrarCambio.place(x=10,y=415)
        			sumaTotal.append(multiplicarCantidad)
        			totalSuma=0
+       			#recorre la lista de sumaTotal y suma sus elementos
        			for i in sumaTotal:
        				totalSuma+=i
        			mostrarTotal.insert(INSERT,totalSuma)
        			
-       			devueltaCliente = devuelta.get()-totalSuma
+       			devueltaCliente = dineroEntregadoCliente.get()-totalSuma
        			#mostrarCambio.insert(INSERT,devueltaCliente)
        			mostrarTotal.configure(state=DISABLED)
 	       			#print(totalSuma)
@@ -122,7 +128,20 @@ class Consulta(tkinter.Frame):
 		        # Increment counter
 
 	
+	#funcion que descuenta de la base de datos cada articulo que se vende 
+    def descontarArticulos(self):
+    	borrar = entradaCodigo.get()
+    	cant = entradaCantidad.get()
 
+    	consulta = objCursor.execute("SELECT * FROM productos")
+    	rows = objCursor.fetchall()
+    	descontar = entradaCantidad
+    	for row in rows:
+    		if entradaCodigo.get()==row[0]:
+    			incremento = row[2]-cant
+    			objCursor.execute("UPDATE productos SET cantidad='%i' WHERE id='%s'"%(incremento,row[0]))
+    			obj.commit()
+    			#entradaCantidad.set("")
 
     	
        
@@ -149,7 +168,7 @@ def guardar2():
 	dato3 = entradaCantidad2.get()
 	dato4 = entradaPrecioM2.get()
 	dato5 = entradaPrecioV2.get()
-	lblGrabar2 = objCursor.execute("INSERT INTO productos values('%s','%s','%i','%i',%i)" % (dato1,dato2,dato3,dato4,dato5) ) 
+	lblGrabar2 = objCursor.execute("INSERT INTO productos values('%s','%s','%i','%i','%i')" % (dato1,dato2,dato3,dato4,dato5) ) 
 	
 	obj.commit()#Label(ventana,text='hola'+entrada.get(),font=("Arial",10)).place(x=456,y=559)	
 	messagebox.showinfo("Guardado","Los datos fueron guardados satisfactoriamente")
